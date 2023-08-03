@@ -1,0 +1,186 @@
+//index.html
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#000000" />
+        <meta name="description" content="**** PrimeReact is an open source UI library for React featuring a rich set of 80+ components, a theme designer, various theme alternatives such as Material, Bootstrap, Tailwind, premium templates and professional support. In addition, it integrates with PrimeBlock, which has 370+ ready to use UI blocks to build spectacular applications in no time." />
+        <!-- Added to show icons in the editor -->
+        <link rel="stylesheet" href="https://unpkg.com/primeicons@6.0.1/primeicons.css">
+        <title>PrimeReact App</title>
+    </head>
+    <body>
+        <noscript>You need to enable JavaScript to run this app.</noscript>
+        <div id="root"></div>
+    </body>
+</html>
+
+
+//index.css
+html {
+    font-size: 14px;
+}
+
+body {
+    font-family: var(--font-family);
+    font-weight: normal;
+    background: var(--surface-ground);
+    color: var(--text-color);
+    padding: 1rem;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.card {
+    background: var(--surface-card);
+    padding: 2rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+}
+
+//index.js
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import 'primereact/resources/themes/lara-light-indigo/theme.css';   // theme
+import 'primereact/resources/primereact.css';                       // core css
+import 'primeicons/primeicons.css';                                 // icons
+import 'primeflex/primeflex.css';                                   // css utility
+import './index.css';
+import './flags.css';
+import App from './App';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+    <React.StrictMode>
+        <App />
+    </React.StrictMode>
+);
+
+//App.js
+
+import React, { useState } from "react";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
+import { Skeleton } from "primereact/skeleton";
+import { CarService } from "./service/CarService";
+
+export default function LazyVirtualScrollDemo() {
+  const cars = Array.from({ length: 100000 }).map((_, i) =>
+    CarService.generateCar(i + 1)
+  );
+  const [virtualCars, setVirtualCars] = useState(
+    Array.from({ length: 100000 })
+  );
+  const [lazyLoading, setLazyLoading] = useState(false);
+  const [expandedRows, setExpandedRows] = useState(null);
+  let loadLazyTimeout = null;
+
+  const loadCarsLazy = (event) => {
+    !lazyLoading && setLazyLoading(true);
+
+    if (loadLazyTimeout) {
+      clearTimeout(loadLazyTimeout);
+    }
+
+    //simulate remote connection with a timeout
+    loadLazyTimeout = setTimeout(() => {
+      let _virtualCars = [...virtualCars];
+      let { first, last } = event;
+
+      //load data of required page
+      const loadedCars = cars.slice(first, last);
+
+      //populate page of virtual cars
+      Array.prototype.splice.apply(_virtualCars, [
+        ...[first, last - first],
+        ...loadedCars
+      ]);
+
+      setVirtualCars(_virtualCars);
+      setLazyLoading(false);
+    }, Math.random() * 1000 + 250);
+  };
+
+  const allowExpansion = (rowData) => {
+    return rowData?.colors.length > 0;
+  };
+
+  const rowExpansionTemplate = (data) => {
+    return (
+      <div style={{ border: "3px solid rgba(0,0,0,.3)" }}>
+        <div>
+          <h2> Colors</h2>
+          <h4>{data.colors[0]}</h4>
+          <h4>{data.colors[1]}</h4>
+        </div>
+        <p>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Nam
+          blanditiis laudantium quas sint ratione vero hic soluta, reprehenderit
+          rem animi eius ullam ipsa molestias voluptates nihil reiciendis
+          doloremque unde necessitatibus, placeat cum fugit natus optio. A
+          commodi ullam, expedita nam amet aut nulla dicta ad est sint laborum
+          maiores. Nulla esse sunt asperiores iure iusto. Nemo provident facere
+          voluptatibus dolore reprehenderit veniam eligendi a. Harum enim ipsa
+          quae fugit architecto rem maiores est ducimus, eligendi iusto
+          praesentium dolorum nesciunt doloribus, repellendus veritatis. Eum,
+          amet nobis voluptate totam ad incidunt quod. Obcaecati velit possimus
+          ab amet corrupti iusto rerum, veniam voluptates!
+        </p>
+      </div>
+    );
+  };
+  const loadingTemplate = (options) => {
+    return (
+      <div
+        className="flex align-items-center"
+        style={{ height: "17px", flexGrow: "1", overflow: "hidden" }}
+      >
+        <Skeleton
+          width={
+            options.cellEven
+              ? options.field === "year"
+                ? "30%"
+                : "40%"
+              : "60%"
+          }
+          height="1rem"
+        />
+      </div>
+    );
+  };
+
+  return (
+    <div className="card">
+      <DataTable
+        value={virtualCars}
+        expandedRows={expandedRows}
+        onRowToggle={(e) => setExpandedRows(e.data)}
+        onRowExpand={() => {}}
+        rowExpansionTemplate={rowExpansionTemplate}
+        scrollable
+        scrollHeight="400px"
+        virtualScrollerOptions={{
+          lazy: true,
+          onLazyLoad: loadCarsLazy,
+          itemSize: 46,
+          delay: 200,
+          showLoader: true,
+          loading: lazyLoading,
+          loadingTemplate
+        }}
+        tableStyle={{ minWidth: "50rem" }}
+      >
+        <Column
+          expander={allowExpansion}
+          header="Id"
+          style={{ width: "20%" }}
+        ></Column>
+        <Column field="vin" header="Vin" style={{ width: "20%" }}></Column>
+        <Column field="year" header="Year" style={{ width: "20%" }}></Column>
+        <Column field="brand" header="Brand" style={{ width: "20%" }}></Column>
+        <Column field="color" header="Color" style={{ width: "20%" }}></Column>
+      </DataTable>
+    </div>
+  );
+}
